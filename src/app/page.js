@@ -1,18 +1,26 @@
 import { CardPost } from "@/components/CardPost";
+import logger from "@/logger";
+import styles from './page.module.css'
+import Link from "next/link";
 
-async function getAllPosts() {
-  const response = await fetch('http://localhost:3042/posts')
+async function getAllPosts(page) {
+  const response = await fetch(`http://localhost:3042/posts?_page=${page}&_per_page=2`)
   if (!response.ok) {
-    console.log('erro')
+    logger.error('Erro ao realizar o fetch')
+    return [];
   }
+  logger.info('Post obtidos com sucesso')
   return response.json();
 }
 
-export default async function Home() {
-  const posts = await getAllPosts();
+export default async function Home({ searchParams }) {
+  const currentPage = searchParams?.page || 1;
+  const { data: posts, prev, next } = await getAllPosts(currentPage);
   return (
-    <main>
-      {posts.map(post => <CardPost post={post} />)}
+    <main className={styles.grid}>
+      {posts.map(post => <CardPost key={post.id} post={post} />)}
+      {prev && <Link href={`/?page=${prev}`}>Página anterior</Link>}
+      {next && <Link href={`/?page=${next}`}>Página seguinte</Link>}
     </main>
   );
 }
